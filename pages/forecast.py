@@ -8,7 +8,7 @@ from services.settings_service import get_next_paycheck_date, get_pay_frequency
 from config.constants import FREQUENCY_DAYS, PAY_PERIODS_PER_YEAR
 
 st.header("Forecast")
-st.caption("Projected cash position over the next 90 days based on paychecks and bills.")
+st.caption("Projected cash position over the next 90 days based on paychecks, bills, and savings commitments.")
 
 today = date.today()
 end_date = today + timedelta(days=90)
@@ -33,6 +33,10 @@ days_between = int(365 / periods)
 check_date = next_paycheck
 while check_date <= end_date:
     events.append({"date": check_date, "description": "Paycheck", "amount": allocation["paycheck"], "type": "income"})
+    if allocation["goals"] > 0:
+        events.append({"date": check_date, "description": "Goal Contributions", "amount": -allocation["goals"], "type": "goals"})
+    if allocation["wishlist"] > 0:
+        events.append({"date": check_date, "description": "Wishlist Savings", "amount": -allocation["wishlist"], "type": "wishlist"})
     check_date += timedelta(days=days_between)
 
 for bill in get_all_bills():
@@ -86,7 +90,11 @@ if timeline:
         c_e.write(row["Event"])
         amt = row["Amount"]
         color = "green" if amt > 0 else "red"
-        c_a.markdown(f'<span style="color:{color}">{"+ " if amt > 0 else ""}${amt:,.2f}</span>', unsafe_allow_html=True)
+        sign = "+" if amt > 0 else "-"
+        c_a.markdown(
+            f'<span style="color:{color}">{sign}${abs(amt):,.2f}</span>',
+            unsafe_allow_html=True,
+        )
         c_b.write(f"${row['Balance']:,.2f}")
 else:
     st.info("No upcoming financial events found. Check that bills and paycheck settings are configured.")

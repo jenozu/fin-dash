@@ -3,6 +3,7 @@ from datetime import date
 from database.database import get_session
 from database.models import Bill
 from config.constants import BILL_FREQUENCIES
+from services.bill_service import get_monthly_bills_total
 
 st.header("Bills")
 
@@ -11,20 +12,8 @@ try:
     bills = session.query(Bill).filter(Bill.is_active == True).order_by(Bill.due_date).all()
     today = date.today()
 
-    monthly_total = 0.0
-    for b in bills:
-        if b.frequency == "Weekly":
-            monthly_total += b.amount * 4.33
-        elif b.frequency == "Bi-Weekly":
-            monthly_total += b.amount * 2.17
-        elif b.frequency == "Monthly":
-            monthly_total += b.amount
-        elif b.frequency == "Quarterly":
-            monthly_total += b.amount / 3.0
-        elif b.frequency == "Annual":
-            monthly_total += b.amount / 12.0
-
-    upcoming_30 = [b for b in bills if b.due_date and (b.due_date - today).days <= 30]
+    monthly_total = get_monthly_bills_total()
+    upcoming_30 = [b for b in bills if b.due_date and 0 <= (b.due_date - today).days <= 30]
 
     c1, c2, c3 = st.columns(3)
     c1.metric("Monthly Obligations", f"${monthly_total:,.2f}")

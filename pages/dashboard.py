@@ -35,20 +35,19 @@ col_left, col_right = st.columns(2)
 with col_left:
     st.subheader("Balance Breakdown")
     available = max(tac["true_available"], 0)
-    fig = px.pie(
-        names=["Available", "Bills", "Goals", "Wishlist"],
-        values=[
-            available,
-            tac["bills_committed"],
-            tac["goals_committed"],
-            tac["wishlist_committed"],
-        ],
-        color_discrete_sequence=["#2ecc71", "#e74c3c", "#3498db", "#f39c12"],
-        hole=0.45,
-    )
-    fig.update_layout(margin=dict(t=20, b=20, l=20, r=20), height=260)
-    fig.update_traces(textinfo="percent+label")
-    st.plotly_chart(fig, use_container_width=True)
+    pie_values = [available, tac["bills_committed"], tac["goals_committed"], tac["wishlist_committed"]]
+    if sum(pie_values) > 0:
+        fig = px.pie(
+            names=["Available", "Bills", "Goals", "Wishlist"],
+            values=pie_values,
+            color_discrete_sequence=["#2ecc71", "#e74c3c", "#3498db", "#f39c12"],
+            hole=0.45,
+        )
+        fig.update_layout(margin=dict(t=20, b=20, l=20, r=20), height=260)
+        fig.update_traces(textinfo="percent+label")
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.info("Add bills, goals, and wishlist items to see your balance breakdown.")
 
 with col_right:
     st.subheader(f"Bills Before Next Paycheck ({next_paycheck})")
@@ -87,18 +86,23 @@ with col_chart:
             yaxis=dict(categoryorder="total ascending"),
         )
         st.plotly_chart(fig2, use_container_width=True)
+    else:
+        st.info("No spending data for the last 30 days.")
 
 with col_progress:
-    st.subheader("Savings Goals")
-    for goal in get_all_goals():
-        pct = min(goal.current_amount / goal.target_amount, 1.0) if goal.target_amount else 0
-        st.write(f"**{goal.goal_name}** — ${goal.current_amount:,.0f} / ${goal.target_amount:,.0f}")
-        st.progress(pct)
+    goals = get_all_goals()
+    if goals:
+        st.subheader("Savings Goals")
+        for goal in goals:
+            pct = min(goal.current_amount / goal.target_amount, 1.0) if goal.target_amount else 0
+            st.write(f"**{goal.goal_name}** — ${goal.current_amount:,.0f} / ${goal.target_amount:,.0f}")
+            st.progress(pct)
 
-    st.markdown("---")
-
-    st.subheader("Wishlist")
-    for item in get_active_wishlist()[:3]:
-        pct = min(item.current_saved / item.estimated_cost, 1.0) if item.estimated_cost else 0
-        st.write(f"**{item.item_name}** — ${item.current_saved:,.0f} / ${item.estimated_cost:,.0f}")
-        st.progress(pct)
+    items = get_active_wishlist()[:3]
+    if items:
+        st.markdown("---")
+        st.subheader("Wishlist")
+        for item in items:
+            pct = min(item.current_saved / item.estimated_cost, 1.0) if item.estimated_cost else 0
+            st.write(f"**{item.item_name}** — ${item.current_saved:,.0f} / ${item.estimated_cost:,.0f}")
+            st.progress(pct)

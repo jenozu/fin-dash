@@ -40,8 +40,10 @@ while check_date <= end_date:
     check_date += timedelta(days=days_between)
 
 for bill in get_all_bills():
-    bill_date = bill.due_date
     freq_days = FREQUENCY_DAYS.get(bill.frequency, 30)
+    if freq_days <= 0:
+        continue
+    bill_date = bill.due_date
     while bill_date <= end_date:
         if bill_date >= today:
             events.append({"date": bill_date, "description": bill.bill_name, "amount": -bill.amount, "type": "bill"})

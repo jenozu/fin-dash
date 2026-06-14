@@ -43,6 +43,16 @@ class Bill(Base):
     is_active = Column(Boolean, default=True)
 
 
+class BillPayment(Base):
+    __tablename__ = "bill_payments"
+
+    id = Column(Integer, primary_key=True)
+    bill_id = Column(Integer, ForeignKey("bills.id"), nullable=False)
+    paid_date = Column(Date, nullable=False)
+    amount_paid = Column(Float, nullable=False)
+    notes = Column(String, nullable=True)
+
+
 class Goal(Base):
     __tablename__ = "goals"
 

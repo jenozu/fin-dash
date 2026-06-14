@@ -16,11 +16,26 @@ with st.form("paycheck_settings_form"):
     new_check = c2.number_input("Average Paycheck ($)", min_value=0.0, value=avg_check, step=50.0)
     new_date = st.date_input("Next Paycheck Date", value=next_paycheck)
 
-    if st.form_submit_button("Save Settings"):
+    if st.form_submit_button("Save Paycheck Settings"):
         set_setting("pay_frequency", new_freq)
         set_setting("average_paycheck", new_check)
         set_setting("next_paycheck_date", str(new_date))
-        st.success("Settings saved.")
+        st.success("Paycheck settings saved.")
+        st.rerun()
+
+st.markdown("---")
+st.subheader("Bills Reserve Account")
+st.caption("Optional: name of the account you keep bill money in (for reference only).")
+with st.form("reserve_account_form"):
+    current_reserve = get_setting("reserve_account_name", "")
+    new_reserve = st.text_input(
+        "Reserve Account Name",
+        value=current_reserve,
+        placeholder="e.g. Bills Checking",
+    )
+    if st.form_submit_button("Save Reserve Account"):
+        set_setting("reserve_account_name", new_reserve)
+        st.success("Reserve account name saved.")
         st.rerun()
 
 st.markdown("---")

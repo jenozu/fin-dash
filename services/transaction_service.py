@@ -4,24 +4,28 @@ from database.models import Transaction
 import pandas as pd
 
 
-def get_transactions_df(days=30):
+def get_transactions_df(days=30, account_id=None):
     session = get_session()
     try:
         cutoff = date.today() - timedelta(days=days)
-        txns = (
+        q = (
             session.query(Transaction)
             .filter(Transaction.transaction_date >= cutoff)
-            .order_by(Transaction.transaction_date.desc())
-            .all()
         )
+        if account_id is not None:
+            q = q.filter(Transaction.account_id == account_id)
+        txns = q.order_by(Transaction.transaction_date.desc()).all()
         data = [{
+            "id": t.id,
             "Date": t.transaction_date,
             "Merchant": t.merchant,
             "Category": t.category or "",
             "Amount": t.amount,
+            "Notes": t.notes or "",
+            "Account": t.account_id,
         } for t in txns]
         if not data:
-            return pd.DataFrame(columns=["Date", "Merchant", "Category", "Amount"])
+            return pd.DataFrame(columns=["id", "Date", "Merchant", "Category", "Amount", "Notes", "Account"])
         return pd.DataFrame(data)
     finally:
         session.close()
@@ -53,3 +57,44 @@ def get_spending_by_category(days=30):
         .reset_index()
         .sort_values("Amount", ascending=False)
     )
+
+
+def add_transaction(merchant, amount, category, txn_date, account_id=None, notes=None):
+    session = get_session()
+    try:
+        session.add(Transaction(
+            merchant=merchant,
+            amount=amount,
+            category=category,
+            transaction_date=txn_date,
+            account_id=account_id,
+            notes=notes,
+            is_pending=False,
+        ))
+        session.commit()
+    finally:
+        session.close()
+
+
+def update_transaction(txn_id, merchant, amount, category, txn_date, notes=None):
+    session = get_session()
+    try:
+        txn = session.query(Transaction).filter(Transaction.id == txn_id).first()
+        if txn:
+            txn.merchant = merchant
+            txn.amount = amount
+            txn.category = category
+            txn.transaction_date = txn_date
+            txn.notes = notes
+            session.commit()
+    finally:
+        session.close()
+
+
+def delete_transaction(txn_id):
+    session = get_session()
+    try:
+        session.query(Transaction).filter(Transaction.id == txn_id).delete()
+        session.commit()
+    finally:
+        session.close()

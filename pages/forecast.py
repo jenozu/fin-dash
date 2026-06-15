@@ -40,13 +40,21 @@ while check_date <= end_date:
     check_date += timedelta(days=days_between)
 
 for bill in get_all_bills():
+    if not bill.due_date:
+        continue
     freq_days = FREQUENCY_DAYS.get(bill.frequency, 30)
     if freq_days <= 0:
         continue
+    # Advance from due_date to the first occurrence on or after today
     bill_date = bill.due_date
+    if bill_date < today:
+        days_past = (today - bill_date).days
+        periods_past = days_past // freq_days
+        bill_date = bill_date + timedelta(days=freq_days * periods_past)
+        if bill_date < today:
+            bill_date += timedelta(days=freq_days)
     while bill_date <= end_date:
-        if bill_date >= today:
-            events.append({"date": bill_date, "description": bill.bill_name, "amount": -bill.amount, "type": "bill"})
+        events.append({"date": bill_date, "description": bill.bill_name, "amount": -bill.amount, "type": "bill"})
         bill_date += timedelta(days=freq_days)
 
 events.sort(key=lambda e: e["date"])

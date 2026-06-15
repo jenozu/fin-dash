@@ -1,3 +1,12 @@
+ACCOUNT_ROLES = ["Spending", "Bills Reserve", "Savings", "Investment", "Other"]
+ACCOUNT_TYPES = ["checking", "savings", "credit", "investment", "loan", "other"]
+ACCOUNT_SUBTYPES = ["personal", "business", "joint", "other"]
+TRANSACTION_CATEGORIES = [
+    "Income", "Groceries", "Dining", "Gas", "Coffee", "Shopping",
+    "Subscriptions", "Entertainment", "Health", "Home", "Transfer",
+    "Utilities", "Insurance", "Education", "Travel", "Other",
+]
+
 BILL_FREQUENCIES = ["Weekly", "Bi-Weekly", "Monthly", "Quarterly", "Annual"]
 PAY_FREQUENCIES = ["Weekly", "Bi-Weekly", "Semi-Monthly", "Monthly"]
 WISHLIST_STATUSES = ["Idea", "Planning", "Saving", "Ready To Buy", "Purchased", "Cancelled"]

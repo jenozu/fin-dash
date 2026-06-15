@@ -11,11 +11,24 @@ class Account(Base):
     id = Column(Integer, primary_key=True)
     account_name = Column(String, nullable=False)
     account_type = Column(String, nullable=False)
+    account_subtype = Column(String, nullable=True)
+    account_role = Column(String, nullable=True)
     current_balance = Column(Float, default=0.0)
     available_balance = Column(Float, default=0.0)
     plaid_account_id = Column(String, nullable=True)
     institution_name = Column(String, nullable=True)
     last_synced = Column(DateTime, default=datetime.utcnow)
+    is_active = Column(Boolean, default=True)
+
+
+class AccountSnapshot(Base):
+    __tablename__ = "account_snapshots"
+
+    id = Column(Integer, primary_key=True)
+    account_id = Column(Integer, ForeignKey("accounts.id"), nullable=False)
+    snapshot_date = Column(Date, nullable=False)
+    balance = Column(Float, nullable=False)
+    notes = Column(String, nullable=True)
 
 
 class Transaction(Base):
@@ -29,6 +42,7 @@ class Transaction(Base):
     category = Column(String, nullable=True)
     transaction_date = Column(Date, nullable=False)
     is_pending = Column(Boolean, default=False)
+    notes = Column(String, nullable=True)
 
 
 class Bill(Base):

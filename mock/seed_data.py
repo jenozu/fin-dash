@@ -1,6 +1,6 @@
 from datetime import date, timedelta
 from database.database import get_session
-from database.models import Account, Transaction, Bill, Goal, WishlistItem, Setting
+from database.models import Account, AccountSnapshot, Transaction, Bill, Goal, WishlistItem, Setting
 
 
 def seed_if_empty():
@@ -9,25 +9,64 @@ def seed_if_empty():
         if session.query(Account).count() > 0:
             return
         today = date.today()
-        _seed_accounts(session)
+        accounts = _seed_accounts(session)
+        session.flush()
+        _seed_snapshots(session, accounts, today)
         _seed_bills(session, today)
         _seed_goals(session, today)
         _seed_wishlist(session, today)
         _seed_settings(session, today)
-        _seed_transactions(session, today)
+        _seed_transactions(session, today, accounts[0])
         session.commit()
     finally:
         session.close()
 
 
 def _seed_accounts(session):
-    session.add(Account(
-        account_name="First Platypus Checking",
-        account_type="checking",
-        current_balance=3247.58,
-        available_balance=3247.58,
-        institution_name="First Platypus Bank",
-    ))
+    accounts = [
+        Account(
+            account_name="First Platypus Checking",
+            account_type="depository",
+            account_subtype="checking",
+            account_role="Spending",
+            current_balance=3247.58,
+            available_balance=3247.58,
+            institution_name="First Platypus Bank",
+            is_active=True,
+        ),
+        Account(
+            account_name="Bills Reserve",
+            account_type="depository",
+            account_subtype="checking",
+            account_role="Bills Reserve",
+            current_balance=2400.00,
+            available_balance=2400.00,
+            institution_name="First Platypus Bank",
+            is_active=True,
+        ),
+        Account(
+            account_name="High Yield Savings",
+            account_type="depository",
+            account_subtype="savings",
+            account_role="Savings",
+            current_balance=1260.00,
+            available_balance=1260.00,
+            institution_name="First Platypus Bank",
+            is_active=True,
+        ),
+    ]
+    session.add_all(accounts)
+    return accounts
+
+
+def _seed_snapshots(session, accounts, today):
+    for account in accounts:
+        session.add(AccountSnapshot(
+            account_id=account.id,
+            snapshot_date=today,
+            balance=account.current_balance,
+            notes="Initial seed balance",
+        ))
 
 
 def _seed_bills(session, today):
@@ -121,7 +160,7 @@ def _seed_settings(session, today):
     ])
 
 
-def _seed_transactions(session, today):
+def _seed_transactions(session, today, spending_account):
     raw = [
         ("Direct Deposit", "Income", 1800.00, 1),
         ("Direct Deposit", "Income", 1800.00, 15),
@@ -160,5 +199,6 @@ def _seed_transactions(session, today):
             amount=amount,
             category=category,
             transaction_date=today - timedelta(days=days_ago),
+            account_id=spending_account.id,
             is_pending=False,
         ))

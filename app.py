@@ -3,9 +3,10 @@ import streamlit as st
 st.set_page_config(page_title="Money Command Center", layout="wide", initial_sidebar_state="expanded")
 
 if "db_initialized" not in st.session_state:
-    from database.schema import init_db
+    from database.schema import init_db, migrate_db
     from mock.seed_data import seed_if_empty
     init_db()
+    migrate_db()
     seed_if_empty()
     st.session_state["db_initialized"] = True
 

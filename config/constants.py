@@ -17,3 +17,16 @@ PAY_PERIODS_PER_YEAR = {
     "Semi-Monthly": 24,
     "Monthly": 12,
 }
+
+ACCOUNT_ROLES = ["Spending", "Bills Reserve", "Savings", "General"]
+ACCOUNT_TYPES = ["depository", "credit", "loan", "investment", "other"]
+ACCOUNT_SUBTYPES = [
+    "checking", "savings", "money market", "cd",
+    "credit card", "mortgage", "auto loan", "student loan",
+    "brokerage", "other",
+]
+TRANSACTION_CATEGORIES = [
+    "Income", "Groceries", "Gas", "Dining", "Coffee", "Shopping",
+    "Subscriptions", "Entertainment", "Health", "Home", "Transfer",
+    "Bills", "Other",
+]

@@ -1,6 +1,6 @@
 from datetime import date, timedelta
 from database.database import get_session
-from database.models import Account, AccountSnapshot, Transaction, Bill, Goal, WishlistItem, Setting
+from database.models import Account, AccountSnapshot, Transaction, Bill, Goal, WishlistItem, Setting, Budget
 
 
 def seed_if_empty():
@@ -16,6 +16,7 @@ def seed_if_empty():
         _seed_goals(session, today)
         _seed_wishlist(session, today)
         _seed_settings(session, today)
+        _seed_budgets(session)
         _seed_transactions(session, today, accounts[0])
         session.commit()
     finally:
@@ -159,6 +160,19 @@ def _seed_settings(session, today):
         Setting(setting_name="min_balance", setting_value="500"),
         Setting(setting_name="plaid_access_token", setting_value=""),
         Setting(setting_name="plaid_item_id", setting_value=""),
+    ])
+
+
+def _seed_budgets(session):
+    session.add_all([
+        Budget(category="Groceries",     monthly_limit=300.00),
+        Budget(category="Gas",           monthly_limit=150.00),
+        Budget(category="Dining",        monthly_limit=200.00),
+        Budget(category="Coffee",        monthly_limit=40.00),
+        Budget(category="Shopping",      monthly_limit=150.00),
+        Budget(category="Subscriptions", monthly_limit=50.00),
+        Budget(category="Entertainment", monthly_limit=80.00),
+        Budget(category="Health",        monthly_limit=60.00),
     ])
 
 

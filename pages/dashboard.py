@@ -7,6 +7,7 @@ from services.goal_service import get_all_goals
 from services.wishlist_service import get_active_wishlist
 from services.bill_service import get_bills_before_paycheck
 from services.settings_service import get_next_paycheck_date, get_setting
+from services.budget_service import get_over_budget_categories
 
 st.header("Dashboard")
 
@@ -70,6 +71,16 @@ with col_left:
 
     if tac_alert > 0 and tac_val < tac_alert:
         st.warning(f"⚠️ True Available Cash ({tac_str}) is below your alert threshold of ${tac_alert:,.2f}.")
+
+    over_budget = get_over_budget_categories(days=30)
+    if over_budget:
+        for ob in over_budget:
+            over_by = ob["actual"] - ob["monthly_limit"]
+            st.error(
+                f"🔴 **{ob['category']}** is over budget — "
+                f"spent ${ob['actual']:,.2f} of ${ob['monthly_limit']:,.2f} "
+                f"(+${over_by:,.2f})"
+            )
 
 with col_right:
     st.subheader(f"Bills Before Next Paycheck ({next_paycheck})")

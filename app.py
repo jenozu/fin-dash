@@ -21,6 +21,7 @@ pg = st.navigation([
     st.Page("pages/bills.py", title="Bills"),
     st.Page("pages/goals.py", title="Goals"),
     st.Page("pages/wishlist.py", title="Wishlist"),
+    st.Page("pages/budgets.py", title="Budgets"),
     st.Page("pages/allocation.py", title="Allocation"),
     st.Page("pages/forecast.py", title="Forecast"),
     st.Page("pages/settings.py", title="Settings"),

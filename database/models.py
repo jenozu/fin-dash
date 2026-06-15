@@ -111,6 +111,15 @@ class WishlistDeposit(Base):
     notes = Column(String, nullable=True)
 
 
+class Budget(Base):
+    __tablename__ = "budgets"
+
+    id = Column(Integer, primary_key=True)
+    category = Column(String, unique=True, nullable=False)
+    monthly_limit = Column(Float, nullable=False)
+    is_active = Column(Boolean, default=True)
+
+
 class Setting(Base):
     __tablename__ = "settings"
 

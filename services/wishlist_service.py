@@ -20,6 +20,8 @@ def per_paycheck_for_item(item, pay_frequency="Bi-Weekly"):
     remaining = item.estimated_cost - item.current_saved
     if remaining <= 0 or not item.planned_purchase_date:
         return 0.0
+    if item.planned_purchase_date < date.today():
+        return 0.0
     weeks_remaining = max((item.planned_purchase_date - date.today()).days / 7.0, 1.0)
     periods_per_year = PAY_PERIODS_PER_YEAR.get(pay_frequency, 26)
     weeks_per_period = 52.0 / periods_per_year

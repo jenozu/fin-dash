@@ -16,6 +16,8 @@ def per_paycheck_for_goal(goal, pay_frequency="Bi-Weekly"):
     remaining = goal.target_amount - goal.current_amount
     if remaining <= 0 or not goal.target_date:
         return 0.0
+    if goal.target_date < date.today():
+        return 0.0
     weeks_remaining = max((goal.target_date - date.today()).days / 7.0, 1.0)
     periods_per_year = PAY_PERIODS_PER_YEAR.get(pay_frequency, 26)
     weeks_per_period = 52.0 / periods_per_year

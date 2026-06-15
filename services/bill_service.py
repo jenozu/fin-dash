@@ -149,7 +149,7 @@ def get_bill_payment_history(bill_id, limit=5):
         return (
             session.query(BillPayment)
             .filter(BillPayment.bill_id == bill_id)
-            .order_by(BillPayment.paid_date.desc())
+            .order_by(BillPayment.paid_date.desc(), BillPayment.id.desc())
             .limit(limit)
             .all()
         )

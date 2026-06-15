@@ -18,11 +18,14 @@ next_paycheck = get_next_paycheck_date()
 today = date.today()
 
 # Row 1: key metrics
+tac_val = tac["true_available"]
+tac_display = f"${tac_val:,.2f}" if tac_val >= 0 else f"-${abs(tac_val):,.2f}"
+
 c1, c2, c3, c4, c5 = st.columns(5)
 c1.metric("Current Balance", f"${tac['balance']:,.2f}")
 c2.metric(
     "True Available Cash",
-    f"${tac['true_available']:,.2f}",
+    tac_display,
     help="Balance minus bills due before next paycheck, goal contributions, and wishlist savings",
 )
 c3.metric("Monthly Spending", f"${monthly_spending:,.2f}")
@@ -46,14 +49,13 @@ with col_left:
             unsafe_allow_html=True,
         )
 
-    _row("Current Balance",       tac["balance"],           "#2ecc71", "+")
-    _row("Bills Before Paycheck", tac["bills_committed"],   "#e74c3c", "-")
-    _row("Goal Contributions",    tac["goals_committed"],   "#3498db", "-")
-    _row("Wishlist Savings",      tac["wishlist_committed"],"#f39c12", "-")
+    _row("Current Balance",       tac["balance"],            "#2ecc71", "+")
+    _row("Bills Before Paycheck", tac["bills_committed"],    "#e74c3c", "-")
+    _row("Goal Contributions",    tac["goals_committed"],    "#3498db", "-")
+    _row("Wishlist Savings",      tac["wishlist_committed"], "#f39c12", "-")
 
     st.markdown("<hr style='margin:6px 0'>", unsafe_allow_html=True)
 
-    tac_val = tac["true_available"]
     tac_color = "#2ecc71" if tac_val >= 0 else "#e74c3c"
     tac_str = f"${tac_val:,.2f}" if tac_val >= 0 else f"-${abs(tac_val):,.2f}"
     cl, cr = st.columns([3, 1])

@@ -40,7 +40,7 @@ c1.metric("Monthly Obligations", f"${monthly_total:,.2f}")
 c2.metric("Active Bills", len(bills))
 c3.metric("Due in 30 Days", len(due_in_30))
 if overdue_bills:
-    c4.metric("Overdue", len(overdue_bills), delta=f"-{len(overdue_bills)}", delta_color="inverse")
+    c4.metric("Overdue", len(overdue_bills), delta=f"-{len(overdue_bills)}")
 else:
     c4.metric("Overdue", 0)
 
@@ -116,10 +116,13 @@ if bills:
                     sc, cc = st.columns(2)
                     saved = sc.form_submit_button("Save Changes")
                     cancelled = cc.form_submit_button("Cancel")
-                    if saved and new_name:
-                        update_bill(bill.id, new_name, new_amount, new_due, new_freq, new_notes)
-                        st.session_state["editing_bill_id"] = None
-                        st.rerun()
+                    if saved:
+                        if new_name:
+                            update_bill(bill.id, new_name, new_amount, new_due, new_freq, new_notes)
+                            st.session_state["editing_bill_id"] = None
+                            st.rerun()
+                        else:
+                            st.warning("Bill name is required.")
                     if cancelled:
                         st.session_state["editing_bill_id"] = None
                         st.rerun()

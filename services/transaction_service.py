@@ -98,3 +98,80 @@ def delete_transaction(txn_id):
         session.commit()
     finally:
         session.close()
+
+
+def upsert_plaid_transactions(added: list, modified: list, removed: list) -> dict:
+    """
+    Sync Plaid transaction deltas into the DB.
+    - added: insert if plaid_transaction_id not already in DB
+    - modified: update matching plaid_transaction_id rows
+    - removed: delete by plaid_transaction_id
+    Manual transactions (plaid_transaction_id IS NULL) are never touched.
+    Returns {inserted, updated, deleted} counts.
+    """
+    from services.plaid_service import map_category
+    from database.models import Account
+    session = get_session()
+    inserted = updated = deleted = 0
+    try:
+        # Build plaid_account_id → db account_id lookup
+        accts = session.query(Account).filter(Account.plaid_account_id.isnot(None)).all()
+        plaid_to_db = {a.plaid_account_id: a.id for a in accts}
+
+        for pt in added:
+            pid = pt.get("transaction_id", "")
+            if not pid:
+                continue
+            exists = session.query(Transaction).filter(Transaction.plaid_transaction_id == pid).first()
+            if exists:
+                continue
+            # Plaid amounts: positive = debit from account (expense), negative = credit (income)
+            # We store expenses as negative, income as positive — so negate
+            amount = -(pt.get("amount") or 0.0)
+            txn_date_raw = pt.get("authorized_date") or pt.get("date")
+            try:
+                txn_date = date.fromisoformat(txn_date_raw)
+            except (TypeError, ValueError):
+                continue
+            db_acct_id = plaid_to_db.get(pt.get("account_id", ""))
+            session.add(Transaction(
+                plaid_transaction_id=pid,
+                account_id=db_acct_id,
+                merchant=pt.get("merchant_name") or pt.get("name") or "Unknown",
+                amount=amount,
+                category=map_category(pt),
+                transaction_date=txn_date,
+                is_pending=pt.get("pending", False),
+            ))
+            inserted += 1
+
+        for pt in modified:
+            pid = pt.get("transaction_id", "")
+            if not pid:
+                continue
+            existing = session.query(Transaction).filter(Transaction.plaid_transaction_id == pid).first()
+            if not existing:
+                continue
+            amount = -(pt.get("amount") or 0.0)
+            txn_date_raw = pt.get("authorized_date") or pt.get("date")
+            try:
+                existing.transaction_date = date.fromisoformat(txn_date_raw)
+            except (TypeError, ValueError):
+                pass
+            existing.merchant = pt.get("merchant_name") or pt.get("name") or existing.merchant
+            existing.amount = amount
+            existing.category = map_category(pt)
+            existing.is_pending = pt.get("pending", False)
+            updated += 1
+
+        for pt in removed:
+            pid = pt.get("transaction_id", "")
+            if not pid:
+                continue
+            session.query(Transaction).filter(Transaction.plaid_transaction_id == pid).delete()
+            deleted += 1
+
+        session.commit()
+        return {"inserted": inserted, "updated": updated, "deleted": deleted}
+    finally:
+        session.close()

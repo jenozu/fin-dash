@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from database.database import get_session
 from database.models import Account, AccountSnapshot
 
@@ -102,5 +102,55 @@ def get_balance_history(account_id):
             .all()
         )
         return [{"date": s.snapshot_date, "balance": s.balance} for s in snaps]
+    finally:
+        session.close()
+
+
+def upsert_plaid_accounts(plaid_accounts: list, item_id: str) -> dict:
+    """
+    Sync Plaid accounts into the DB.
+    - Match by plaid_account_id: update balances + last_synced
+    - No match: create new account (manual accounts are never touched)
+    Returns {created: int, updated: int}
+    """
+    from services.plaid_service import guess_account_role
+    session = get_session()
+    created = updated = 0
+    today = date.today()
+    try:
+        for pa in plaid_accounts:
+            pid = pa.get("account_id", "")
+            balances = pa.get("balances", {})
+            current_bal = balances.get("current") or 0.0
+            available_bal = balances.get("available") or current_bal
+
+            existing = session.query(Account).filter(Account.plaid_account_id == pid).first()
+            if existing:
+                existing.current_balance = current_bal
+                existing.available_balance = available_bal
+                existing.last_synced = datetime.utcnow()
+                session.add(AccountSnapshot(account_id=existing.id, balance=current_bal, snapshot_date=today))
+                updated += 1
+            else:
+                role = guess_account_role(pa)
+                new_acct = Account(
+                    account_name=pa.get("name", "Plaid Account"),
+                    account_type=(pa.get("type") or "checking").lower(),
+                    account_subtype=(pa.get("subtype") or "personal").lower(),
+                    account_role=role,
+                    current_balance=current_bal,
+                    available_balance=available_bal,
+                    plaid_account_id=pid,
+                    institution_name=pa.get("institution_name") or "Plaid",
+                    last_synced=datetime.utcnow(),
+                    is_active=True,
+                )
+                session.add(new_acct)
+                session.flush()
+                session.add(AccountSnapshot(account_id=new_acct.id, balance=current_bal, snapshot_date=today))
+                created += 1
+
+        session.commit()
+        return {"created": created, "updated": updated}
     finally:
         session.close()

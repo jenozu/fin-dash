@@ -147,6 +147,8 @@ def _seed_settings(session, today):
         Setting(setting_name="next_paycheck_date", setting_value=str(next_paycheck)),
         Setting(setting_name="plaid_access_token", setting_value=""),
         Setting(setting_name="plaid_item_id", setting_value=""),
+        Setting(setting_name="plaid_cursor", setting_value=""),
+        Setting(setting_name="plaid_last_sync", setting_value=""),
     ])
 
 

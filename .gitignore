@@ -1,5 +1,6 @@
 .env
 database/finance.db
+*.db
 __pycache__/
 *.pyc
 *.pyo

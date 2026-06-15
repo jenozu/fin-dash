@@ -64,6 +64,16 @@ class Goal(Base):
     notes = Column(String, nullable=True)
 
 
+class GoalDeposit(Base):
+    __tablename__ = "goal_deposits"
+
+    id = Column(Integer, primary_key=True)
+    goal_id = Column(Integer, ForeignKey("goals.id"), nullable=False)
+    deposit_date = Column(Date, nullable=False)
+    amount = Column(Float, nullable=False)
+    notes = Column(String, nullable=True)
+
+
 class WishlistItem(Base):
     __tablename__ = "wishlist"
 
@@ -74,6 +84,16 @@ class WishlistItem(Base):
     planned_purchase_date = Column(Date, nullable=True)
     priority = Column(String, default="Medium")
     status = Column(String, default="Planning")
+    notes = Column(String, nullable=True)
+
+
+class WishlistDeposit(Base):
+    __tablename__ = "wishlist_deposits"
+
+    id = Column(Integer, primary_key=True)
+    item_id = Column(Integer, ForeignKey("wishlist.id"), nullable=False)
+    deposit_date = Column(Date, nullable=False)
+    amount = Column(Float, nullable=False)
     notes = Column(String, nullable=True)
 
 

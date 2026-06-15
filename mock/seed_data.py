@@ -155,6 +155,8 @@ def _seed_settings(session, today):
         Setting(setting_name="pay_frequency", setting_value="Bi-Weekly"),
         Setting(setting_name="average_paycheck", setting_value="1800"),
         Setting(setting_name="next_paycheck_date", setting_value=str(next_paycheck)),
+        Setting(setting_name="tac_alert_threshold", setting_value="500"),
+        Setting(setting_name="min_balance", setting_value="500"),
         Setting(setting_name="plaid_access_token", setting_value=""),
         Setting(setting_name="plaid_item_id", setting_value=""),
     ])

@@ -6,7 +6,7 @@ from services.transaction_service import get_monthly_spending, get_monthly_incom
 from services.goal_service import get_all_goals
 from services.wishlist_service import get_active_wishlist
 from services.bill_service import get_bills_before_paycheck
-from services.settings_service import get_next_paycheck_date
+from services.settings_service import get_next_paycheck_date, get_setting
 
 st.header("Dashboard")
 
@@ -16,6 +16,7 @@ monthly_income = get_monthly_income()
 net_cash = monthly_income - monthly_spending
 next_paycheck = get_next_paycheck_date()
 today = date.today()
+tac_alert = float(get_setting("tac_alert_threshold", "0") or "0")
 
 # Row 1: key metrics
 tac_val = tac["true_available"]
@@ -66,6 +67,9 @@ with col_left:
         unsafe_allow_html=True,
     )
     st.caption(f"Paycheck window: today through {next_paycheck}")
+
+    if tac_alert > 0 and tac_val < tac_alert:
+        st.warning(f"⚠️ True Available Cash ({tac_str}) is below your alert threshold of ${tac_alert:,.2f}.")
 
 with col_right:
     st.subheader(f"Bills Before Next Paycheck ({next_paycheck})")

@@ -39,6 +39,33 @@ with st.form("reserve_account_form"):
         st.rerun()
 
 st.markdown("---")
+st.subheader("Display Thresholds")
+st.caption("Minimum balance appears as a dotted line on Forecast. TAC threshold triggers a Dashboard warning.")
+with st.form("thresholds_form"):
+    c1, c2 = st.columns(2)
+    current_min = float(get_setting("min_balance", "0") or "0")
+    current_tac_alert = float(get_setting("tac_alert_threshold", "0") or "0")
+    new_min = c1.number_input(
+        "Minimum Balance ($)",
+        min_value=0.0,
+        value=current_min,
+        step=100.0,
+        help="Shown as a dotted orange line on the Forecast chart.",
+    )
+    new_tac_alert = c2.number_input(
+        "TAC Alert Threshold ($)",
+        min_value=0.0,
+        value=current_tac_alert,
+        step=100.0,
+        help="Dashboard shows a warning when True Available Cash falls below this amount.",
+    )
+    if st.form_submit_button("Save Thresholds"):
+        set_setting("min_balance", new_min)
+        set_setting("tac_alert_threshold", new_tac_alert)
+        st.success("Thresholds saved.")
+        st.rerun()
+
+st.markdown("---")
 st.subheader("Plaid Integration")
 st.info(
     "Plaid account connection will be available in a future update. "

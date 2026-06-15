@@ -1,11 +1,14 @@
 import streamlit as st
 import plotly.graph_objects as go
 import pandas as pd
+from calendar import monthrange
 from datetime import date, timedelta
 from services.bill_service import get_all_bills
+from services.goal_service import get_all_goals, per_paycheck_for_goal
+from services.wishlist_service import get_active_wishlist, per_paycheck_for_item
 from services.allocation_service import get_current_balance, calculate_paycheck_allocation
-from services.settings_service import get_next_paycheck_date, get_pay_frequency
-from config.constants import FREQUENCY_DAYS, PAY_PERIODS_PER_YEAR
+from services.settings_service import get_next_paycheck_date, get_pay_frequency, get_setting
+from config.constants import PAY_PERIODS_PER_YEAR
 
 st.header("Forecast")
 st.caption("Projected cash position over the next 90 days based on paychecks, bills, and savings commitments.")
@@ -17,6 +20,39 @@ balance = get_current_balance()
 pay_freq = get_pay_frequency()
 next_paycheck = get_next_paycheck_date()
 allocation = calculate_paycheck_allocation()
+min_balance = float(get_setting("min_balance", "0") or "0")
+
+goals = get_all_goals()
+wishlist_items = get_active_wishlist()
+
+
+def _advance_date(current, frequency):
+    """Calendar-correct advancement by one billing period."""
+    if frequency == "Weekly":
+        return current + timedelta(days=7)
+    elif frequency == "Bi-Weekly":
+        return current + timedelta(days=14)
+    elif frequency == "Monthly":
+        month = current.month + 1
+        year = current.year
+        if month > 12:
+            month = 1
+            year += 1
+        return date(year, month, min(current.day, monthrange(year, month)[1]))
+    elif frequency == "Quarterly":
+        month = current.month + 3
+        year = current.year
+        if month > 12:
+            month -= 12
+            year += 1
+        return date(year, month, min(current.day, monthrange(year, month)[1]))
+    elif frequency == "Annual":
+        try:
+            return current.replace(year=current.year + 1)
+        except ValueError:
+            return date(current.year + 1, current.month, 28)
+    return current + timedelta(days=30)
+
 
 c1, c2, c3 = st.columns(3)
 c1.metric("Current Balance", f"${balance:,.2f}")
@@ -32,22 +68,43 @@ periods = PAY_PERIODS_PER_YEAR.get(pay_freq, 26)
 days_between = int(365 / periods)
 check_date = next_paycheck
 while check_date <= end_date:
-    events.append({"date": check_date, "description": "Paycheck", "amount": allocation["paycheck"], "type": "income"})
-    if allocation["goals"] > 0:
-        events.append({"date": check_date, "description": "Goal Contributions", "amount": -allocation["goals"], "type": "goals"})
-    if allocation["wishlist"] > 0:
-        events.append({"date": check_date, "description": "Wishlist Savings", "amount": -allocation["wishlist"], "type": "wishlist"})
+    events.append({
+        "date": check_date,
+        "description": "Paycheck",
+        "amount": allocation["paycheck"],
+        "type": "income",
+    })
+    for goal in goals:
+        per_check = per_paycheck_for_goal(goal, pay_freq)
+        if per_check > 0:
+            events.append({
+                "date": check_date,
+                "description": f"Goal: {goal.goal_name}",
+                "amount": -per_check,
+                "type": "goals",
+            })
+    for item in wishlist_items:
+        per_check = per_paycheck_for_item(item, pay_freq)
+        if per_check > 0:
+            events.append({
+                "date": check_date,
+                "description": f"Wishlist: {item.item_name}",
+                "amount": -per_check,
+                "type": "wishlist",
+            })
     check_date += timedelta(days=days_between)
 
 for bill in get_all_bills():
-    freq_days = FREQUENCY_DAYS.get(bill.frequency, 30)
-    if freq_days <= 0:
-        continue
     bill_date = bill.due_date
     while bill_date <= end_date:
         if bill_date >= today:
-            events.append({"date": bill_date, "description": bill.bill_name, "amount": -bill.amount, "type": "bill"})
-        bill_date += timedelta(days=freq_days)
+            events.append({
+                "date": bill_date,
+                "description": bill.bill_name,
+                "amount": -bill.amount,
+                "type": "bill",
+            })
+        bill_date = _advance_date(bill_date, bill.frequency)
 
 events.sort(key=lambda e: e["date"])
 
@@ -55,7 +112,13 @@ running = balance
 timeline = []
 for e in events:
     running += e["amount"]
-    timeline.append({"Date": e["date"], "Event": e["description"], "Amount": e["amount"], "Balance": running, "Type": e["type"]})
+    timeline.append({
+        "Date": e["date"],
+        "Event": e["description"],
+        "Amount": e["amount"],
+        "Balance": running,
+        "Type": e["type"],
+    })
 
 if timeline:
     df = pd.DataFrame(timeline)
@@ -75,6 +138,14 @@ if timeline:
         hovertemplate="<b>%{x}</b><br>Balance: $%{y:,.2f}<extra></extra>",
     ))
     fig.add_hline(y=0, line_dash="dash", line_color="red", opacity=0.5, annotation_text="Zero")
+    if min_balance > 0:
+        fig.add_hline(
+            y=min_balance,
+            line_dash="dot",
+            line_color="orange",
+            opacity=0.7,
+            annotation_text=f"Min: ${min_balance:,.0f}",
+        )
     fig.update_layout(
         title="90-Day Cash Flow Forecast",
         xaxis_title="Date",

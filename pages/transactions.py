@@ -38,9 +38,11 @@ m3.metric("Transactions", len(df))
 st.markdown("---")
 
 if not df.empty:
-    display = df[["Date", "Merchant", "Category", "Amount", "Notes"]].copy()
+    display = df[["Date", "Merchant", "Category", "Amount", "Notes", "Pending"]].copy()
     display["Amount"] = display["Amount"].apply(lambda x: f"-${abs(x):,.2f}" if x < 0 else f"+${x:,.2f}")
     display["Date"] = pd.to_datetime(display["Date"]).dt.strftime("%b %d, %Y")
+    display["Status"] = display["Pending"].apply(lambda p: "⏳ Pending" if p else "✅ Posted")
+    display = display.drop(columns=["Pending"])
 
     st.dataframe(display, use_container_width=True, hide_index=True)
 

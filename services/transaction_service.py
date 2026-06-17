@@ -23,9 +23,10 @@ def get_transactions_df(days=30, account_id=None):
             "Amount": t.amount,
             "Notes": t.notes or "",
             "Account": t.account_id,
+            "Pending": t.is_pending,
         } for t in txns]
         if not data:
-            return pd.DataFrame(columns=["id", "Date", "Merchant", "Category", "Amount", "Notes", "Account"])
+            return pd.DataFrame(columns=["id", "Date", "Merchant", "Category", "Amount", "Notes", "Account", "Pending"])
         return pd.DataFrame(data)
     finally:
         session.close()

@@ -41,7 +41,8 @@ if accounts:
             h1, h2, h3, h4 = st.columns([3, 2, 2, 1])
             with h1:
                 st.subheader(f"{badge} {acct.account_name}")
-                st.caption(f"{inst} — {acct.account_type.title()} — {role_label}")
+                source_label = "🔗 Plaid" if acct.plaid_account_id else "✏️ Manual"
+                st.caption(f"{inst} — {acct.account_type.title()} — {role_label} — {source_label}")
             h2.metric("Current Balance", f"${acct.current_balance:,.2f}")
             h3.metric("Available Balance", f"${acct.available_balance:,.2f}")
             with h4:

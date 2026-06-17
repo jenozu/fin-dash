@@ -5,9 +5,13 @@ from services.transaction_service import get_monthly_spending, get_monthly_incom
 from services.goal_service import get_all_goals
 from services.wishlist_service import get_active_wishlist
 from services.bill_service import get_bills_before_paycheck
-from services.settings_service import get_next_paycheck_date
+from services.settings_service import get_next_paycheck_date, get_setting
 
 st.header("Dashboard")
+
+last_sync = get_setting("plaid_last_sync", "")
+if last_sync:
+    st.caption(f"🔄 Plaid last synced: {last_sync}")
 
 tac = calculate_true_available_cash()
 monthly_spending = get_monthly_spending()

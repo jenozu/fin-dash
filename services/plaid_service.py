@@ -52,7 +52,11 @@ def _post(endpoint: str, body: dict) -> dict:
         raise RuntimeError("Plaid credentials not configured. Set PLAID_CLIENT_ID and PLAID_SECRET in .env")
     payload = {"client_id": PLAID_CLIENT_ID, "secret": PLAID_SECRET, **body}
     resp = requests.post(f"{_base_url()}{endpoint}", json=payload, timeout=30)
-    data = resp.json()
+    try:
+        data = resp.json()
+    except ValueError:
+        resp.raise_for_status()
+        raise RuntimeError(f"Plaid API returned a non-JSON response (status {resp.status_code})")
     if resp.status_code != 200:
         error_code = data.get("error_code", "UNKNOWN")
         error_msg = data.get("error_message", resp.text)

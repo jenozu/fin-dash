@@ -50,3 +50,24 @@ def get_monthly_bills_total():
         elif bill.frequency == "Annual":
             total += bill.amount / 12.0
     return total
+
+
+def add_bill(bill_name, amount, due_date, frequency, notes=None):
+    session = get_session()
+    try:
+        session.add(Bill(
+            bill_name=bill_name, amount=amount, due_date=due_date,
+            frequency=frequency, notes=notes,
+        ))
+        session.commit()
+    finally:
+        session.close()
+
+
+def delete_bill(bill_id):
+    session = get_session()
+    try:
+        session.query(Bill).filter(Bill.id == bill_id).delete()
+        session.commit()
+    finally:
+        session.close()

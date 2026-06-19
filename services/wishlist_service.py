@@ -28,3 +28,25 @@ def per_paycheck_for_item(item, pay_frequency="Bi-Weekly"):
 
 def get_wishlist_committed(pay_frequency="Bi-Weekly"):
     return sum(per_paycheck_for_item(i, pay_frequency) for i in get_active_wishlist())
+
+
+def add_wishlist_item(item_name, estimated_cost, current_saved, planned_purchase_date, priority, status, notes=None):
+    session = get_session()
+    try:
+        session.add(WishlistItem(
+            item_name=item_name, estimated_cost=estimated_cost, current_saved=current_saved,
+            planned_purchase_date=planned_purchase_date, priority=priority,
+            status=status, notes=notes,
+        ))
+        session.commit()
+    finally:
+        session.close()
+
+
+def delete_wishlist_item(item_id):
+    session = get_session()
+    try:
+        session.query(WishlistItem).filter(WishlistItem.id == item_id).delete()
+        session.commit()
+    finally:
+        session.close()

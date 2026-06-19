@@ -24,3 +24,24 @@ def per_paycheck_for_goal(goal, pay_frequency="Bi-Weekly"):
 
 def get_goals_committed(pay_frequency="Bi-Weekly"):
     return sum(per_paycheck_for_goal(g, pay_frequency) for g in get_all_goals())
+
+
+def add_goal(goal_name, target_amount, current_amount, target_date, notes=None):
+    session = get_session()
+    try:
+        session.add(Goal(
+            goal_name=goal_name, target_amount=target_amount,
+            current_amount=current_amount, target_date=target_date, notes=notes,
+        ))
+        session.commit()
+    finally:
+        session.close()
+
+
+def delete_goal(goal_id):
+    session = get_session()
+    try:
+        session.query(Goal).filter(Goal.id == goal_id).delete()
+        session.commit()
+    finally:
+        session.close()

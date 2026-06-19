@@ -25,11 +25,25 @@ c3.metric("Paycheck Amount", f"${allocation['paycheck']:,.2f}")
 
 st.markdown("---")
 
+def _next_semi_monthly(d):
+    """Semi-monthly paychecks land on the 1st and 15th of each month."""
+    if d.day < 15:
+        return d.replace(day=15)
+    next_month = d.month % 12 + 1
+    next_year = d.year + (1 if d.month == 12 else 0)
+    return date(next_year, next_month, 1)
+
+
+def _next_paycheck_date(d, pay_freq):
+    if pay_freq == "Semi-Monthly":
+        return _next_semi_monthly(d)
+    days_between = int(365 / PAY_PERIODS_PER_YEAR.get(pay_freq, 26))
+    return d + timedelta(days=days_between)
+
+
 # Build event timeline
 events = []
 
-periods = PAY_PERIODS_PER_YEAR.get(pay_freq, 26)
-days_between = int(365 / periods)
 check_date = next_paycheck
 while check_date <= end_date:
     events.append({"date": check_date, "description": "Paycheck", "amount": allocation["paycheck"], "type": "income"})
@@ -37,7 +51,7 @@ while check_date <= end_date:
         events.append({"date": check_date, "description": "Goal Contributions", "amount": -allocation["goals"], "type": "goals"})
     if allocation["wishlist"] > 0:
         events.append({"date": check_date, "description": "Wishlist Savings", "amount": -allocation["wishlist"], "type": "wishlist"})
-    check_date += timedelta(days=days_between)
+    check_date = _next_paycheck_date(check_date, pay_freq)
 
 for bill in get_all_bills():
     if not bill.due_date:

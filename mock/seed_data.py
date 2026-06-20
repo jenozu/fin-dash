@@ -1,6 +1,6 @@
 from datetime import date, timedelta
 from database.database import get_session
-from database.models import Account, Transaction, Bill, Goal, WishlistItem, Setting
+from database.models import Account, AccountSnapshot, Transaction, Bill, Goal, WishlistItem, Setting
 
 
 def seed_if_empty():
@@ -9,25 +9,54 @@ def seed_if_empty():
         if session.query(Account).count() > 0:
             return
         today = date.today()
-        _seed_accounts(session)
+        spending_id = _seed_accounts(session)
         _seed_bills(session, today)
         _seed_goals(session, today)
         _seed_wishlist(session, today)
         _seed_settings(session, today)
-        _seed_transactions(session, today)
+        _seed_transactions(session, today, spending_id)
         session.commit()
     finally:
         session.close()
 
 
 def _seed_accounts(session):
-    session.add(Account(
+    spending = Account(
         account_name="First Platypus Checking",
         account_type="checking",
+        account_subtype="personal",
+        account_role="Spending",
         current_balance=3247.58,
         available_balance=3247.58,
         institution_name="First Platypus Bank",
-    ))
+        is_active=True,
+    )
+    bills_reserve = Account(
+        account_name="First Platypus Bills Reserve",
+        account_type="savings",
+        account_subtype="personal",
+        account_role="Bills Reserve",
+        current_balance=1503.00,
+        available_balance=1503.00,
+        institution_name="First Platypus Bank",
+        is_active=True,
+    )
+    savings = Account(
+        account_name="First Platypus Savings",
+        account_type="savings",
+        account_subtype="personal",
+        account_role="Savings",
+        current_balance=2309.15,
+        available_balance=2309.15,
+        institution_name="First Platypus Bank",
+        is_active=True,
+    )
+    session.add_all([spending, bills_reserve, savings])
+    session.flush()  # assign IDs
+    today = date.today()
+    for acct, bal in [(spending, 3247.58), (bills_reserve, 1503.00), (savings, 2309.15)]:
+        session.add(AccountSnapshot(account_id=acct.id, balance=bal, snapshot_date=today))
+    return spending.id
 
 
 def _seed_bills(session, today):
@@ -118,10 +147,12 @@ def _seed_settings(session, today):
         Setting(setting_name="next_paycheck_date", setting_value=str(next_paycheck)),
         Setting(setting_name="plaid_access_token", setting_value=""),
         Setting(setting_name="plaid_item_id", setting_value=""),
+        Setting(setting_name="plaid_cursor", setting_value=""),
+        Setting(setting_name="plaid_last_sync", setting_value=""),
     ])
 
 
-def _seed_transactions(session, today):
+def _seed_transactions(session, today, account_id=None):
     raw = [
         ("Direct Deposit", "Income", 1800.00, 1),
         ("Direct Deposit", "Income", 1800.00, 15),
@@ -161,4 +192,5 @@ def _seed_transactions(session, today):
             category=category,
             transaction_date=today - timedelta(days=days_ago),
             is_pending=False,
+            account_id=account_id,
         ))

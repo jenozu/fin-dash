@@ -1,5 +1,4 @@
-from database.database import get_session
-from database.models import Account
+from services.account_service import get_spending_balance
 from services.settings_service import get_pay_frequency, get_average_paycheck
 from services.bill_service import get_bills_committed, get_monthly_bills_total
 from services.goal_service import get_goals_committed
@@ -8,12 +7,7 @@ from config.constants import PAY_PERIODS_PER_YEAR
 
 
 def get_current_balance():
-    session = get_session()
-    try:
-        account = session.query(Account).first()
-        return account.current_balance if account else 0.0
-    finally:
-        session.close()
+    return get_spending_balance()
 
 
 def calculate_true_available_cash():

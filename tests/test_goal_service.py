@@ -50,3 +50,29 @@ def test_get_goals_committed_sums_all_goals():
     goal_service.add_goal("B", 1000.0, 0.0, target_date)
     total = goal_service.get_goals_committed("Bi-Weekly")
     assert total == 1000.0
+
+
+def test_add_goal_deposit_updates_current_amount():
+    goal_service.add_goal("Vacation", 1000.0, 100.0, date.today() + timedelta(weeks=4))
+    goal_id = goal_service.get_all_goals()[0].id
+
+    goal_service.add_goal_deposit(goal_id, 50.0, deposit_date=date.today())
+
+    goal = goal_service.get_all_goals()[0]
+    assert goal.current_amount == 150.0
+
+
+def test_add_goal_deposit_records_history():
+    goal_service.add_goal("Vacation", 1000.0, 0.0, date.today() + timedelta(weeks=4))
+    goal_id = goal_service.get_all_goals()[0].id
+
+    goal_service.add_goal_deposit(goal_id, 25.0)
+    goal_service.add_goal_deposit(goal_id, 75.0)
+
+    history = goal_service.get_deposit_history(goal_id)
+    assert len(history) == 2
+    assert sorted(d.amount for d in history) == [25.0, 75.0]
+
+
+def test_get_deposit_history_empty_for_unknown_goal():
+    assert goal_service.get_deposit_history(999) == []

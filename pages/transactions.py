@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from datetime import date
-from services.transaction_service import get_transactions_df, add_transaction, delete_transaction
+from services.transaction_service import get_transactions_df, add_transaction, update_transaction, delete_transaction
 from services.account_service import get_all_accounts
 from config.constants import TRANSACTION_CATEGORIES
 
@@ -45,6 +45,32 @@ if not df.empty:
     display = display.drop(columns=["Pending"])
 
     st.dataframe(display, use_container_width=True, hide_index=True)
+
+    with st.expander("Edit a Transaction"):
+        txn_labels = {f"{row['Date']} — {row['Merchant']} ({row['Amount']})": idx for idx, row in display.iterrows()}
+        if txn_labels:
+            to_edit = st.selectbox("Select transaction to edit", list(txn_labels.keys()), key="edit_txn")
+            original_idx = txn_labels[to_edit]
+            txn_row = df.loc[original_idx]
+            with st.form("edit_txn_form"):
+                e1, e2 = st.columns(2)
+                edit_merchant = e1.text_input("Merchant", value=txn_row["Merchant"], key="edit_merchant")
+                edit_date = e2.date_input("Date", value=pd.to_datetime(txn_row["Date"]).date(), key="edit_date")
+                e3, e4 = st.columns(2)
+                edit_category = e3.selectbox(
+                    "Category", TRANSACTION_CATEGORIES,
+                    index=TRANSACTION_CATEGORIES.index(txn_row["Category"]) if txn_row["Category"] in TRANSACTION_CATEGORIES else 0,
+                    key="edit_cat",
+                )
+                edit_sign = e4.radio("Type", ["Expense (−)", "Income (+)"], index=0 if txn_row["Amount"] < 0 else 1, horizontal=True, key="edit_sign")
+                e5, e6 = st.columns(2)
+                edit_amount_val = e5.number_input("Amount ($)", min_value=0.01, step=0.01, value=abs(float(txn_row["Amount"])), key="edit_amount")
+                edit_notes = e6.text_input("Notes (optional)", value=txn_row["Notes"], key="edit_notes")
+                if st.form_submit_button("Save Changes"):
+                    signed_amount = -edit_amount_val if "Expense" in edit_sign else edit_amount_val
+                    update_transaction(int(txn_row["id"]), edit_merchant, signed_amount, edit_category, edit_date, edit_notes or None)
+                    st.success("Transaction updated.")
+                    st.rerun()
 
     with st.expander("Delete a Transaction"):
         txn_labels = {f"{row['Date']} — {row['Merchant']} ({row['Amount']})": idx for idx, row in display.iterrows()}

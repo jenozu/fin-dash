@@ -56,6 +56,16 @@ class Bill(Base):
     is_active = Column(Boolean, default=True)
 
 
+class BillPayment(Base):
+    __tablename__ = "bill_payments"
+
+    id = Column(Integer, primary_key=True)
+    bill_id = Column(Integer, ForeignKey("bills.id"), nullable=False)
+    amount = Column(Float, nullable=False)
+    paid_date = Column(Date, nullable=False)
+    due_date = Column(Date, nullable=True)
+
+
 class Goal(Base):
     __tablename__ = "goals"
 
@@ -65,6 +75,15 @@ class Goal(Base):
     current_amount = Column(Float, default=0.0)
     target_date = Column(Date, nullable=False)
     notes = Column(String, nullable=True)
+
+
+class GoalDeposit(Base):
+    __tablename__ = "goal_deposits"
+
+    id = Column(Integer, primary_key=True)
+    goal_id = Column(Integer, ForeignKey("goals.id"), nullable=False)
+    amount = Column(Float, nullable=False)
+    deposit_date = Column(Date, nullable=False)
 
 
 class WishlistItem(Base):
@@ -78,6 +97,15 @@ class WishlistItem(Base):
     priority = Column(String, default="Medium")
     status = Column(String, default="Planning")
     notes = Column(String, nullable=True)
+
+
+class WishlistDeposit(Base):
+    __tablename__ = "wishlist_deposits"
+
+    id = Column(Integer, primary_key=True)
+    wishlist_id = Column(Integer, ForeignKey("wishlist.id"), nullable=False)
+    amount = Column(Float, nullable=False)
+    deposit_date = Column(Date, nullable=False)
 
 
 class Setting(Base):

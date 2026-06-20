@@ -4,7 +4,7 @@ from services.allocation_service import calculate_true_available_cash
 from services.transaction_service import get_monthly_spending, get_monthly_income, get_spending_by_category
 from services.goal_service import get_all_goals
 from services.wishlist_service import get_active_wishlist
-from services.bill_service import get_bills_before_paycheck
+from services.bill_service import get_bills_before_paycheck, get_funding_status
 from services.settings_service import get_next_paycheck_date, get_setting
 
 st.header("Dashboard")
@@ -58,9 +58,11 @@ with col_right:
     upcoming = get_bills_before_paycheck()
     if upcoming:
         for bill in upcoming:
-            c_a, c_b = st.columns([4, 1])
+            status = get_funding_status(bill, tac["balance"])
+            c_a, c_b, c_c = st.columns([3, 1, 2])
             c_a.write(f"**{bill.bill_name}** — due {bill.due_date}")
             c_b.write(f"${bill.amount:,.2f}")
+            c_c.write(status)
         st.markdown(f"**Total committed: ${tac['bills_committed']:,.2f}**")
     else:
         st.info("No bills due before next paycheck.")

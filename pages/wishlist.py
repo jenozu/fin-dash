@@ -1,7 +1,10 @@
 import streamlit as st
 from datetime import date
 from config.constants import WISHLIST_STATUSES, PRIORITY_LEVELS
-from services.wishlist_service import get_active_wishlist, per_paycheck_for_item, add_wishlist_item, delete_wishlist_item
+from services.wishlist_service import (
+    get_active_wishlist, per_paycheck_for_item, add_wishlist_item, delete_wishlist_item,
+    add_wishlist_deposit, get_deposit_history,
+)
 from services.settings_service import get_pay_frequency
 
 st.header("Wishlist")
@@ -45,6 +48,20 @@ if items:
             if c_x.button("X", key=f"del_wish_{item.id}"):
                 delete_wishlist_item(item.id)
                 st.rerun()
+
+            with st.expander("Deposit Funds"):
+                with st.form(f"wish_deposit_form_{item.id}"):
+                    deposit_amount = st.number_input("Deposit Amount ($)", min_value=0.01, step=10.0, key=f"wish_deposit_amt_{item.id}")
+                    if st.form_submit_button("Deposit"):
+                        add_wishlist_deposit(item.id, deposit_amount)
+                        st.success(f"Deposited ${deposit_amount:,.2f} to {item.item_name}")
+                        st.rerun()
+
+            history = get_deposit_history(item.id)
+            if history:
+                with st.expander(f"Contribution history ({len(history)})"):
+                    for deposit in history:
+                        st.write(f"${deposit.amount:,.2f} on {deposit.deposit_date}")
 else:
     st.info("No wishlist items yet. Add your first item below.")
 

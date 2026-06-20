@@ -1,6 +1,9 @@
 import streamlit as st
 from datetime import date
-from services.goal_service import get_all_goals, per_paycheck_for_goal, add_goal, delete_goal
+from services.goal_service import (
+    get_all_goals, per_paycheck_for_goal, add_goal, delete_goal,
+    add_goal_deposit, get_deposit_history,
+)
 from services.settings_service import get_pay_frequency
 
 st.header("Goals")
@@ -43,6 +46,20 @@ if goals:
             if c_x.button("X", key=f"del_goal_{goal.id}"):
                 delete_goal(goal.id)
                 st.rerun()
+
+            with st.expander("Deposit Funds"):
+                with st.form(f"deposit_form_{goal.id}"):
+                    deposit_amount = st.number_input("Deposit Amount ($)", min_value=0.01, step=10.0, key=f"deposit_amt_{goal.id}")
+                    if st.form_submit_button("Deposit"):
+                        add_goal_deposit(goal.id, deposit_amount)
+                        st.success(f"Deposited ${deposit_amount:,.2f} to {goal.goal_name}")
+                        st.rerun()
+
+            history = get_deposit_history(goal.id)
+            if history:
+                with st.expander(f"Contribution history ({len(history)})"):
+                    for deposit in history:
+                        st.write(f"${deposit.amount:,.2f} on {deposit.deposit_date}")
 else:
     st.info("No savings goals yet. Add your first goal below.")
 

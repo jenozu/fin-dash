@@ -66,3 +66,33 @@ def test_get_wishlist_committed_sums_items():
     wishlist_service.add_wishlist_item("A", 800.0, 0.0, target_date, "Medium", "Saving")
     wishlist_service.add_wishlist_item("B", 800.0, 0.0, target_date, "Medium", "Saving")
     assert wishlist_service.get_wishlist_committed("Bi-Weekly") == 800.0
+
+
+def test_add_wishlist_deposit_updates_current_saved():
+    wishlist_service.add_wishlist_item(
+        "Camera", 800.0, 100.0, date.today() + timedelta(days=60), "Medium", "Saving"
+    )
+    item_id = wishlist_service.get_active_wishlist()[0].id
+
+    wishlist_service.add_wishlist_deposit(item_id, 50.0, deposit_date=date.today())
+
+    item = wishlist_service.get_active_wishlist()[0]
+    assert item.current_saved == 150.0
+
+
+def test_add_wishlist_deposit_records_history():
+    wishlist_service.add_wishlist_item(
+        "Camera", 800.0, 0.0, date.today() + timedelta(days=60), "Medium", "Saving"
+    )
+    item_id = wishlist_service.get_active_wishlist()[0].id
+
+    wishlist_service.add_wishlist_deposit(item_id, 25.0)
+    wishlist_service.add_wishlist_deposit(item_id, 75.0)
+
+    history = wishlist_service.get_deposit_history(item_id)
+    assert len(history) == 2
+    assert sorted(d.amount for d in history) == [25.0, 75.0]
+
+
+def test_get_deposit_history_empty_for_unknown_item():
+    assert wishlist_service.get_deposit_history(999) == []

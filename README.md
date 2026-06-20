@@ -2,6 +2,11 @@
 
 A personal finance dashboard built with Streamlit. Tracks accounts, transactions, bills, savings goals, and a wishlist, with Plaid Sandbox sync and a 90-day cash flow forecast.
 
+## Documentation
+
+- [MVP Requirements](docs/MVP.md) — scope and acceptance criteria for Version 1.0
+- [Product Requirements Document (PRD)](docs/PRD.md) — full product spec, source of truth
+
 ## Setup
 
 ```bash
